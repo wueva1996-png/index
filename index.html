@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chuan減脂決策儀表板｜每日結算與自動配餐器</title>
+<style>
+  :root {
+    --bg: #f6f7f5;
+    --card-bg: #ffffff;
+    --text-main: #1f2421;
+    --text-muted: #6b7280;
+    --green-dark: #2d5a42;
+    --green-mid: #4a7c59;
+    --green-light: #e8f1ec;
+    --green-badge-bg: #dcfce7;
+    --green-badge-text: #166534;
+    --amber-badge-bg: #fef3c7;
+    --amber-badge-text: #92400e;
+    --orange-accent: #c86d44;
+    --blue-dark: #2c4a5e;
+    --border: #e5e7eb;
+    --shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+    background-color: var(--bg);
+    color: var(--text-main);
+    line-height: 1.5;
+    padding: 16px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .journal-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--green-mid);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 12px;
+  }
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .pill {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .tab-btn.active {
+    background: var(--green-dark);
+    color: #ffffff;
+    border-color: var(--green-dark);
+    box-shadow: 0 4px 12px rgba(45, 90, 66, 0.2);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .card-highlight {
+    border-left: 5px solid var(--green-dark);
+  }
+  .status-line {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 6px;
+  }
+  .summary-headline {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1.35;
+  }
+  .summary-desc {
+    font-size: 13.5px;
+    color: #4b5563;
+    margin-bottom: 14px;
+  }
+  .deficit-box {
+    background: var(--green-light);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .deficit-sub {
+    font-size: 12px;
+    color: var(--green-dark);
+    font-weight: 600;
+  }
+  .deficit-val {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--green-dark);
+    line-height: 1.2;
+    margin: 2px 0;
+  }
+  .deficit-unit {
+    font-size: 12px;
+    color: #4b5563;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+  }
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 4px;
+  }
+  .kpi-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4b5563;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge-green { background: var(--green-badge-bg); color: var(--green-badge-text); }
+  .badge-amber { background: var(--amber-badge-bg); color: var(--amber-badge-text); }
+  .kpi-val {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 4px;
+  }
+  .kpi-val span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .kpi-note {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .section-sub {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .chart-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    font-size: 12px;
+    color: #4b5563;
+    margin-top: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot-square { width: 10px; height: 10px; border-radius: 2px; background: var(--green-dark); }
+  .dot-dash { width: 14px; border-top: 2px dashed var(--orange-accent); }
+
+  .donut-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 12px 0;
+  }
+  .macro-boxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .macro-box {
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 12px;
+  }
+  .macro-p { background: #eef6f1; color: #2d5a42; }
+  .macro-c { background: #eef3f7; color: #2c4a5e; }
+  .macro-f { background: #fbf1ec; color: #9c4a27; }
+  .macro-box strong { display: block; font-size: 13px; margin-bottom: 2px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 6px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+  }
+  .meal-tag {
+    font-weight: 700;
+    white-space: nowrap;
+    width: 90px;
+  }
+  .total-row {
+    background: var(--green-light);
+    font-weight: 800;
+    color: var(--green-dark);
+  }
+  .total-row td { padding: 12px 10px; border-bottom: none; }
+
+  .plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .plan-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--green-dark);
+  }
+  .plan-summary-bar {
+    background: var(--green-light);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 10px;
+  }
+  .meal-slot {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #fafafa;
+  }
+  .meal-slot-top {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .meal-slot-kcal { color: var(--orange-accent); font-size: 13px; }
+  .meal-slot-items { font-size: 13px; color: #374151; margin-bottom: 4px; }
+  .meal-slot-macros { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+  .rule-item {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+  }
+  .rule-item:last-child { border-bottom: none; }
+  .rule-title { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+  .rule-desc { font-size: 13px; color: #4b5563; }
+
+  .edit-panel {
+    background: #ffffff;
+    border: 1.5px solid var(--green-mid);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .edit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .edit-grid label { font-size: 12px; font-weight: 600; color: #374151; display: block; }
+  .edit-grid input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .auto-badge {
+    display: inline-block;
+    font-size: 10px;
+    background: #e8f1ec;
+    color: #2d5a42;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: 700;
+  }
+  .readonly-auto {
+    background-color: #f3f7f4;
+    color: #1f2421;
+    font-weight: 700;
+  }
+  .meal-row-box {
+    grid-column: span 2;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .meal-input-line {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 6px;
+    margin-top: 6px;
+    align-items: center;
+  }
+  .btn-calc {
+    background: #eef6f1;
+    color: var(--green-dark);
+    border: 1px solid var(--green-mid);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .calc-hint {
+    font-size: 12px;
+    color: #1f2421;
+    background: #f3f7f4;
+    border-radius: 8px;
+    padding: 6px 8px;
+    margin-top: 6px;
+    line-height: 1.45;
+  }
+  .btn-group {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .btn-update {
+    background: var(--green-dark);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-reset {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .save-toast {
+    display: none;
+    margin-top: 8px;
+    background: var(--green-badge-bg);
+    color: var(--green-badge-text);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .history-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #fafafa;
+  }
+  .history-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .history-date {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--green-dark);
+  }
+  .history-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .btn-mini {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    color: #374151;
+  }
+  .btn-mini.del { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+  .history-stats {
+    font-size: 12.5px;
+    color: #374151;
+    line-height: 1.6;
+  }
+  .history-meals {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="journal-tag" id="top-journal">MY FAT-LOSS JOURNAL • 2026/11/27</div>
+  <h1 id="top-title">Chuan減脂決策儀表板｜每日結算與自動配餐器</h1>
+
+  <div class="pills">
+    <div class="pill" id="pill-goal">🎯 階段目標體重 45 kg</div>
+    <div class="pill" id="pill-range">🔥 上限 1,250 kcal｜蛋白 90–105g</div>
+  </div>
+
+  <details class="edit-panel" id="edit-details" open>
+    <summary style="font-size: 13.5px; font-weight: 700; color: var(--green-dark); cursor: pointer;">
+      ✍️ 只要輸入「目標體重」與「吃了什麼」，其餘全部自動幫你算好！
+    </summary>
+    <div class="edit-grid">
+      <div><label>記錄日期</label><input type="date" id="in-date" value="2026-11-27"></div>
+      <div><label>暱稱 / 標題前綴</label><input type="text" id="in-name" value="Chuan"></div>
+
+      <div>
+        <label>目標體重 (kg) <span class="auto-badge">輸入即自動算上限</span></label>
+        <input type="number" id="in-goal" value="45" step="0.1" oninput="autoCalcGoalsFromWeight()">
+      </div>
+      <div>
+        <label>每日熱量上限 (kcal) <span class="auto-badge">自動推薦</span></label>
+        <input type="number" id="in-target-kcal" class="readonly-auto" value="1250">
+      </div>
+      <div>
+        <label>目標蛋白質範圍 <span class="auto-badge">自動推薦</span></label>
+        <input type="text" id="in-target-p" class="readonly-auto" value="90–105g">
+      </div>
+      <div>
+        <label>今日總蛋白質 (g) <span class="auto-badge">四餐自動加總</span></label>
+        <input type="number" id="in-p" class="readonly-auto" value="0" step="0.1">
+      </div>
+      <div>
+        <label>今日總碳水 (g) <span class="auto-badge">四餐自動加總</span></label>
+        <input type="number" id="in-c" class="readonly-auto" value="0" step="0.1">
+      </div>
+      <div>
+        <label>今日總脂肪 (g) <span class="auto-badge">四餐自動加總</span></label>
+        <input type="number" id="in-f" class="readonly-auto" value="0" step="0.1">
+      </div>
+
+      <div class="meal-row-box">
+        <label>🌅 早餐吃了什麼（例如：水煮蛋 1 顆 + 無糖豆漿 250ml）</label>
+        <div class="meal-input-line">
+          <input type="text" id="in-m1-txt" value="" placeholder="輸入食物，例如：水煮蛋 1 顆 + 無糖豆漿 250ml" oninput="autoEstimateMeal(1)">
+          <input type="number" id="in-m1" value="0" step="0.1" placeholder="熱量" oninput="recalcAllMacrosFromMeals()">
+          <button type="button" class="btn-calc" onclick="autoEstimateMeal(1)">🧮 算熱量</button>
+        </div>
+        <div class="calc-hint" id="hint-m1">輸入食材後會自動估算熱量與三大營養素</div>
+      </div>
+
+      <div class="meal-row-box">
+        <label>☀️ 午餐吃了什麼</label>
+        <div class="meal-input-line">
+          <input type="text" id="in-m2-txt" value="" placeholder="例如：雞胸肉 100g + 地瓜 100g + 燙青菜 1 份" oninput="autoEstimateMeal(2)">
+          <input type="number" id="in-m2" value="0" step="0.1" placeholder="熱量" oninput="recalcAllMacrosFromMeals()">
+          <button type="button" class="btn-calc" onclick="autoEstimateMeal(2)">🧮 算熱量</button>
+        </div>
+        <div class="calc-hint" id="hint-m2">輸入食材後會自動估算熱量與三大營養素</div>
+      </div>
+
+      <div class="meal-row-box">
+        <label>🌙 晚餐吃了什麼</label>
+        <div class="meal-input-line">
+          <input type="text" id="in-m3-txt" value="" placeholder="例如：鮭魚 100g + 糙米 100g + 花椰菜 100g" oninput="autoEstimateMeal(3)">
+          <input type="number" id="in-m3" value="0" step="0.1" placeholder="熱量" oninput="recalcAllMacrosFromMeals()">
+          <button type="button" class="btn-calc" onclick="autoEstimateMeal(3)">🧮 算熱量</button>
+        </div>
+        <div class="calc-hint" id="hint-m3">輸入食材後會自動估算熱量與三大營養素</div>
+      </div>
+
+      <div class="meal-row-box">
+        <label>🥛 睡前／點心吃了什麼</label>
+        <div class="meal-input-line">
+          <input type="text" id="in-m4-txt" value="" placeholder="例如：乳清蛋白 1 包 + 無糖豆漿 250ml" oninput="autoEstimateMeal(4)">
+          <input type="number" id="in-m4" value="0" step="0.1" placeholder="熱量" oninput="recalcAllMacrosFromMeals()">
+          <button type="button" class="btn-calc" onclick="autoEstimateMeal(4)">🧮 算熱量</button>
+        </div>
+        <div class="calc-hint" id="hint-m4">輸入食材後會自動估算熱量與三大營養素</div>
+      </div>
+
+      <div style="grid-column: span 2;">
+        <label>📝 今日結算心得備註（可留白或自行記錄）</label>
+        <input type="text" id="in-note" value="" placeholder="記錄今日飲水、運動或飲食心得...">
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn-update" onclick="saveAndUpdate()">💾 儲存並更新儀表板</button>
+      <button class="btn-reset" onclick="clearTodayInputs()">清空今日欄位</button>
+    </div>
+    <div class="save-toast" id="save-toast">✔ 已儲存至本機瀏覽器！下次打開會自動載入此紀錄。</div>
+  </details>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab1', this)">📊 今日結算總表</button>
+    <button class="tab-btn" onclick="switchTab('tab2', this)">🍱 決策規則與配餐</button>
+    <button class="tab-btn" onclick="switchTab('tab3', this)">📈 歷史趨勢與紀錄</button>
+  </div>
+
+  <div id="tab1" class="tab-content active">
+    <div class="card card-highlight">
+      <div class="status-line" id="status-line">✔ 2026/11/27 正式開帳・自動決策系統就緒</div>
+      <div class="summary-headline" id="headline-text">今日創造 -1,250 kcal 熱量赤字，蛋白質 0g！</div>
+      <div class="summary-desc" id="summary-desc">已根據目標體重 45 kg 自動設定每日熱量上限 1,250 kcal 與蛋白質目標 90–105g。</div>
+      <div class="deficit-box">
+        <div class="deficit-sub" id="deficit-top-label">距離上限 1,250</div>
+        <div class="deficit-val" id="deficit-val">-1,250</div>
+        <div class="deficit-unit">kcal 淨赤字</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">總熱量攝取</span>
+          <span class="badge badge-green" id="badge-kcal">赤字達標</span>
+        </div>
+        <div class="kpi-val" id="val-kcal">0 <span>kcal</span></div>
+        <div class="kpi-note" id="note-kcal">低於上限 1,250 kcal</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">總蛋白質</span>
+          <span class="badge badge-green" id="badge-p">0% 達成</span>
+        </div>
+        <div class="kpi-val" id="val-p">0 <span>g</span></div>
+        <div class="kpi-note" id="note-p">對標 90–105g｜守護瘦體重</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">總碳水化合物</span>
+          <span class="badge badge-green">穩糖控碳</span>
+        </div>
+        <div class="kpi-val" id="val-c">0 <span>g</span></div>
+        <div class="kpi-note">精準控制精緻澱粉比例</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">總脂肪</span>
+          <span class="badge badge-amber" id="badge-f">鐵則執行</span>
+        </div>
+        <div class="kpi-val" id="val-f">0 <span>g</span></div>
+        <div class="kpi-note">建議控制在 35–50g 區間內</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" id="bar-title">餐別熱量分布 vs 1,250 kcal 上限線</div>
+      <div class="section-sub" id="bar-sub">全日累積 0 kcal（早 0%・午 0%・晚 0%・睡前 0%）</div>
+      <div class="chart-wrap">
+        <svg id="bar-svg" viewBox="0 0 560 220" width="100%" height="220"></svg>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="dot-square"></span>實際熱量 (kcal)</div>
+        <div class="legend-item"><span class="dot-dash"></span><span id="legend-limit">每日熱量上限 (1,250 kcal)</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">三大營養素熱量結構佔比</div>
+      <div class="section-sub" id="donut-sub">蛋白 0%・碳水 0%・脂肪 0%</div>
+      <div class="donut-container">
+        <svg id="donut-svg" viewBox="0 0 200 200" width="170" height="170"></svg>
+      </div>
+      <div class="macro-boxes">
+        <div class="macro-box macro-p" id="box-p"><strong>蛋白質 0%</strong>0 kcal<br>(0g)</div>
+        <div class="macro-box macro-c" id="box-c"><strong>碳水 0%</strong>0 kcal<br>(0g)</div>
+        <div class="macro-box macro-f" id="box-f"><strong>脂肪 0%</strong>0 kcal<br>(0g)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" id="table-title">2026/11/27 四餐完整營養結算明細</div>
+      <div class="section-sub">已自動同步上方最新輸入之餐點內容與熱量結算</div>
+      <span class="badge badge-green">已存檔紀錄</span>
+      <table>
+        <thead>
+          <tr>
+            <th>餐別</th>
+            <th>實際攝取內容</th>
+            <th style="text-align:right;">熱量</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="meal-tag">🌅 早餐</td>
+            <td id="td-m1-txt">-</td>
+            <td style="text-align:right; font-weight:700;" id="td-m1-kcal">0 kcal</td>
+          </tr>
+          <tr>
+            <td class="meal-tag">☀️ 午餐</td>
+            <td id="td-m2-txt">-</td>
+            <td style="text-align:right; font-weight:700;" id="td-m2-kcal">0 kcal</td>
+          </tr>
+          <tr>
+            <td class="meal-tag">🌙 晚餐</td>
+            <td id="td-m3-txt">-</td>
+            <td style="text-align:right; font-weight:700;" id="td-m3-kcal">0 kcal</td>
+          </tr>
+          <tr>
+            <td class="meal-tag">🥛 睡前收尾</td>
+            <td id="td-m4-txt">-</td>
+            <td style="text-align:right; font-weight:700;" id="td-m4-kcal">0 kcal</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="3" id="table-total">全日總計：0 kcal</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab2" class="tab-content">
+    <div class="card">
+      <div class="plan-header">
+        <span class="plan-title">啟動鐵則 1 + 鐵則 2（高脂魚類日蛋量調節）</span>
+      </div>
+      <div class="plan-summary-bar" id="auto-plan-bar">目標 45 kg 推薦範本：約 1,210 kcal　P 102g　C 88g　F 46g</div>
+      <div class="summary-desc" style="background:#f9fafb; padding:10px; border-radius:8px;">
+        💡 <strong>決策說明：</strong>午間已攝取鯖魚／鮭魚等優質油脂，早餐自動拿掉 1 顆蛋黃（省下 5g 脂肪），睡前放心喝無糖豆漿泡乳清衝高蛋白！
+      </div>
+
+      <div class="meal-slot">
+        <div class="meal-slot-top"><span>🌅 早餐（去 1 蛋黃調節）</span><span class="meal-slot-kcal">211 kcal</span></div>
+        <div class="meal-slot-items">水煮全蛋 1 顆 + 純蛋白 1 顆 + 無糖豆漿 350ml</div>
+        <div class="meal-slot-macros">P 22g • C 9.8g • F 9.2g</div>
+      </div>
+
+      <div class="meal-slot">
+        <div class="meal-slot-top"><span>☀️ 午餐（好油魚類主餐）</span><span class="meal-slot-kcal">450 kcal</span></div>
+        <div class="meal-slot-items">乾煎鮭魚 (80g) + 燙青菜 1 碗 + 紫米飯半碗</div>
+        <div class="meal-slot-macros">P 24g • C 36g • F 22g</div>
+      </div>
+
+      <div class="meal-slot">
+        <div class="meal-slot-top"><span>🌙 晚餐（低脂原型蛋白）</span><span class="meal-slot-kcal">179 kcal</span></div>
+        <div class="meal-slot-items">舒肥嫩雞胸 1 包 (100g) + 清燙花椰菜 / 金針菇 1 大碗</div>
+        <div class="meal-slot-macros">P 22.5g • C 10.6g • F 4.9g</div>
+      </div>
+
+      <div class="meal-slot">
+        <div class="meal-slot-top"><span>🥛 睡前收尾（鐵則 1 補滿）</span><span class="meal-slot-kcal">285 kcal</span></div>
+        <div class="meal-slot-items">無糖豆漿 250ml + 乳清蛋白 1 包</div>
+        <div class="meal-slot-macros">P 36g • C 9g • F 7.8g</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📋 每日執行核心鐵則清單</div>
+      <div class="rule-item">
+        <div class="rule-title">1. 蛋白質依目標體重 × 2.0~2.2g 優先達標</div>
+        <div class="rule-desc">睡前若蛋白質還沒達標，直接用「250ml 無糖豆漿 + 1 包乳清」補滿，守住基礎代謝。</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-title">2. 執行「高脂日蛋黃調節法」</div>
+        <div class="rule-desc">當日若吃鯖魚、鮭魚或高油脂便當，其餘餐次自動去掉 1–2 顆蛋黃，省下 5–10g 脂肪。</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-title">3. 嚴守進食順序與每日 2,000–2,500ml 飲水</div>
+        <div class="rule-desc">餐前先喝 300ml 溫水或清湯 → 優先吃肉類海鮮 → 吃高纖蔬菜 → 最後吃抗性澱粉（地瓜／冬粉／紫米）。</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab3" class="tab-content">
+    <div class="card card-highlight">
+      <div class="journal-tag">CUMULATIVE PROGRESS • 歷史自動彙整</div>
+      <div class="summary-headline" id="hist-headline">已累積 0 天結算紀錄，持續追蹤波動平衡！</div>
+      <div class="deficit-box" style="margin-top:12px;">
+        <div class="deficit-sub">歷史累積淨熱量變化</div>
+        <div class="deficit-val" id="hist-total-diff">0 kcal</div>
+        <div class="deficit-unit" id="hist-avg-note">日均攝取 0 kcal｜日均蛋白 0g</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">歷史日均熱量</div>
+        <div class="kpi-val" id="hist-avg-kcal">0 <span>kcal</span></div>
+        <div class="kpi-note" style="color:var(--green-dark); font-weight:600;">✔ 依所有已儲存日期自動計算</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">歷史日均蛋白質</div>
+        <div class="kpi-val" id="hist-avg-p">0 <span>g</span></div>
+        <div class="kpi-note" style="color:var(--green-dark); font-weight:600;">✔ 守護瘦體重核心指標</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🗂️ 每日儲存紀錄清單（點擊「載入」可回看或修改該日數據）</div>
+      <div class="section-sub">每次更改日期並按下「儲存並更新儀表板」，系統會自動將該日紀錄歸檔至此。</div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+<script>
+const STORAGE_KEY_CURRENT = 'fat_loss_dashboard_current_v6';
+const STORAGE_KEY_HISTORY = 'fat_loss_dashboard_history_v6';
+
+const FOOD_DB = [
+  { keys: ['水煮蛋', '白煮蛋', '水煮全蛋'], unitKcal: 70, p: 6.3, c: 0.4, f: 4.8, unitLabel: '顆' },
+  { keys: ['茶葉蛋'], unitKcal: 75, p: 7.0, c: 0.5, f: 5.0, unitLabel: '顆' },
+  { keys: ['荷包蛋', '煎蛋', '蔥花蛋'], unitKcal: 115, p: 6.5, c: 0.8, f: 9.5, unitLabel: '顆' },
+  { keys: ['蛋白', '純蛋白', '高蛋白'], unitKcal: 120, p: 25.0, c: 2.0, f: 1.5, unitLabel: '份' },
+  { keys: ['無糖豆漿'], perMl: 0.36, pPerMl: 0.036, cPerMl: 0.015, fPerMl: 0.018, defaultQty: 250, unitLabel: 'ml' },
+  { keys: ['豆漿', '有糖豆漿'], perMl: 0.52, pPerMl: 0.035, cPerMl: 0.055, fPerMl: 0.018, defaultQty: 250, unitLabel: 'ml' },
+  { keys: ['乳清', '乳清蛋白'], unitKcal: 159, p: 27.0, c: 5.3, f: 3.3, unitLabel: '包' },
+  { keys: ['雞胸', '嫩雞胸', '舒肥雞胸'], per100g: 120, pPer100g: 23.0, cPer100g: 0.5, fPer100g: 2.2, defaultQty: 100, unitLabel: 'g' },
+  { keys: ['鯖魚'], per100g: 245, pPer100g: 18.0, cPer100g: 0.0, fPer100g: 19.0, defaultQty: 100, unitLabel: 'g' },
+  { keys: ['鮭魚'], per100g: 208, pPer100g: 20.0, cPer100g: 0.0, fPer100g: 13.4, defaultQty: 100, unitLabel: 'g' },
+  { keys: ['鮪魚飯糰', '雙蔬鮪魚飯糰', '飯糰'], unitKcal: 215, p: 6.5, c: 36.0, f: 4.5, unitLabel: '個' },
+  { keys: ['白飯'], per100g: 180, pPer100g: 3.0, cPer100g: 40.0, fPer100g: 0.3, defaultQty: 150, unitLabel: 'g' },
+  { keys: ['糙米', '紫米'], per100g: 155, pPer100g: 3.5, cPer100g: 33.0, fPer100g: 1.0, defaultQty: 100, unitLabel: 'g' },
+  { keys: ['地瓜', '番薯'], per100g: 115, pPer100g: 1.5, cPer100g: 26.5, fPer100g: 0.2, defaultQty: 100, unitLabel: 'g' },
+  { keys: ['奇異果'], unitKcal: 42, p: 0.8, c: 10.0, f: 0.4, unitLabel: '顆' },
+  { keys: ['香蕉'], unitKcal: 95, p: 1.2, c: 24.0, f: 0.3, unitLabel: '根' },
+  { keys: ['蘋果'], unitKcal: 75, p: 0.4, c: 20.0, f: 0.2, unitLabel: '顆' },
+  { keys: ['青菜', '燙青菜', '花椰菜', '絲瓜'], per100g: 28, pPer100g: 2.0, cPer100g: 4.5, fPer100g: 0.3, defaultQty: 100, unitLabel: 'g' },
+  { keys: ['牛奶', '鮮奶'], perMl: 0.65, pPerMl: 0.032, cPerMl: 0.048, fPerMl: 0.036, defaultQty: 250, unitLabel: 'ml' },
+  { keys: ['拿鐵'], unitKcal: 130, p: 6.0, c: 9.0, f: 7.0, unitLabel: '杯' },
+  { keys: ['美式', '黑咖啡'], unitKcal: 10, p: 0.3, c: 1.5, f: 0.0, unitLabel: '杯' }
+];
+
+function autoCalcGoalsFromWeight() {
+  const w = parseFloat(document.getElementById('in-goal').value);
+  if (!isNaN(w) && w > 25 && w < 200) {
+    const recKcal = Math.max(1200, Math.round((w * 27.5) / 10) * 10);
+    const minP = Math.round(w * 2.0);
+    const maxP = Math.round(w * 2.3);
+    document.getElementById('in-target-kcal').value = recKcal;
+    document.getElementById('in-target-p').value = `${minP}–${maxP}g`;
+  }
+}
+
+function chineseNumToFloat(str) {
+  if (!str) return null;
+  if (!isNaN(parseFloat(str))) return parseFloat(str);
+  const map = { '半': 0.5, '一': 1, '壹': 1, '兩': 2, '二': 2, '貳': 2, '三': 3, '參': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10 };
+  if (map[str] !== undefined) return map[str];
+  return null;
+}
+
+function estimateSegment(segText) {
+  const clean = segText.trim();
+  if (!clean) return null;
+
+  for (const item of FOOD_DB) {
+    const matchedKey = item.keys.find(k => clean.includes(k));
+    if (matchedKey) {
+      const numMatch = clean.match(/(\d+(?:\.\d+)?|[半一壹兩二貳三參四五六七八九十])\s*(顆|粒|個|根|杯|包|份|碗|ml|毫升|g|克)?/);
+      let qty = numMatch ? chineseNumToFloat(numMatch[1]) : null;
+      const unit = (numMatch && numMatch[2]) ? numMatch[2] : '';
+
+      if (item.unitKcal !== undefined) {
+        if (qty === null) qty = 1;
+        if (clean.includes('半') && !numMatch) qty = 0.5;
+        return {
+          label: `${matchedKey} ${qty}${unit || item.unitLabel}`,
+          kcal: +(item.unitKcal * qty).toFixed(1),
+          p: +(item.p * qty).toFixed(1),
+          c: +(item.c * qty).toFixed(1),
+          f: +(item.f * qty).toFixed(1)
+        };
+      }
+
+      if (item.perMl !== undefined) {
+        if (qty === null) qty = item.defaultQty;
+        else if (qty <= 5 && unit !== 'ml' && unit !== '毫升') qty = qty * 250;
+        return {
+          label: `${matchedKey} ${qty}ml`,
+          kcal: +(item.perMl * qty).toFixed(1),
+          p: +(item.pPerMl * qty).toFixed(1),
+          c: +(item.cPerMl * qty).toFixed(1),
+          f: +(item.fPerMl * qty).toFixed(1)
+        };
+      }
+
+      if (item.per100g !== undefined) {
+        if (qty === null) qty = item.defaultQty;
+        else if (unit === '碗') qty = qty * 150;
+        else if (unit === '包' || unit === '份') qty = qty * 100;
+        else if (qty <= 5 && unit !== 'g' && unit !== '克') qty = qty * 100;
+        const ratio = qty / 100;
+        return {
+          label: `${matchedKey} ${qty}g`,
+          kcal: +(item.per100g * ratio).toFixed(1),
+          p: +(item.pPer100g * ratio).toFixed(1),
+          c: +(item.cPer100g * ratio).toFixed(1),
+          f: +(item.fPer100g * ratio).toFixed(1)
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function autoEstimateMeal(mealIdx) {
+  const txt = document.getElementById(`in-m${mealIdx}-txt`).value;
+  const parts = txt.split(/[+＋、,，/／]+/);
+  let totalKcal = 0;
+  let details = [];
+  let matchedAny = false;
+  let hasUnmatched = false;
+
+  parts.forEach(part => {
+    const trimmed = part.trim();
+    if (!trimmed) return;
+    const res = estimateSegment(trimmed);
+    if (res) {
+      matchedAny = true;
+      totalKcal += res.kcal;
+      details.push(`${res.label} (${res.kcal} kcal)`);
+    } else {
+      hasUnmatched = true;
+      details.push(`「${trimmed}」不在內建清單（可直接在旁填入熱量）`);
+    }
+  });
+
+  const hintEl = document.getElementById(`hint-m${mealIdx}`);
+  if (matchedAny && !hasUnmatched) {
+    const rounded = +totalKcal.toFixed(1);
+    document.getElementById(`in-m${mealIdx}`).value = rounded;
+    hintEl.innerHTML = `✔ 已算出：${details.join(' + ')} → <strong>${rounded} kcal</strong>`;
+  } else if (matchedAny && hasUnmatched) {
+    const rounded = +totalKcal.toFixed(1);
+    document.getElementById(`in-m${mealIdx}`).value = rounded;
+    hintEl.innerHTML = `⚠️ 部分辨識：${details.join('、')} → 目前先算 <strong>${rounded} kcal</strong>`;
+  } else if (hasUnmatched) {
+    hintEl.innerHTML = `⚠️ 「${txt.trim()}」不在內建食材庫中，請直接在右側熱量框輸入數字，或改用「雞胸肉 100g、水煮蛋 1 顆、無糖豆漿 250ml」等關鍵字。`;
+  } else {
+    document.getElementById(`in-m${mealIdx}`).value = 0;
+    hintEl.innerText = '輸入食材後會自動估算熱量與三大營養素';
+  }
+  recalcAllMacrosFromMeals();
+}
+
+function recalcAllMacrosFromMeals() {
+  const allTexts = [1, 2, 3, 4].map(i => document.getElementById(`in-m${i}-txt`).value).join(' + ');
+  const parts = allTexts.split(/[+＋、,，/／]+/);
+  let pSum = 0, cSum = 0, fSum = 0;
+
+  parts.forEach(part => {
+    const res = estimateSegment(part);
+    if (res) {
+      pSum += res.p;
+      cSum += res.c;
+      fSum += res.f;
+    }
+  });
+
+  document.getElementById('in-p').value = +pSum.toFixed(1);
+  document.getElementById('in-c').value = +cSum.toFixed(1);
+  document.getElementById('in-f').value = +fSum.toFixed(1);
+}
+
+const DEFAULT_DATA = {
+  date: '2026-11-27',
+  name: 'Chuan',
+  goal: '45',
+  limit: 1250,
+  targetP: '90–105g',
+  m1: 0,
+  m1Txt: '',
+  m2: 0,
+  m2Txt: '',
+  m3: 0,
+  m3Txt: '',
+  m4: 0,
+  m4Txt: '',
+  p: 0,
+  c: 0,
+  f: 0,
+  note: ''
+};
+
+function getHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function saveHistory(list) {
+  try {
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(list));
+  } catch (e) {}
+}
+
+function loadSavedData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CURRENT);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return DEFAULT_DATA;
+}
+
+function populateInputs(data) {
+  document.getElementById('in-date').value = data.date || DEFAULT_DATA.date;
+  document.getElementById('in-name').value = data.name || 'Chuan';
+  document.getElementById('in-goal').value = data.goal || '45';
+  document.getElementById('in-target-kcal').value = data.limit ?? 1250;
+  document.getElementById('in-target-p').value = data.targetP || '90–105g';
+  document.getElementById('in-m1').value = data.m1 ?? 0;
+  document.getElementById('in-m1-txt').value = data.m1Txt || '';
+  document.getElementById('in-m2').value = data.m2 ?? 0;
+  document.getElementById('in-m2-txt').value = data.m2Txt || '';
+  document.getElementById('in-m3').value = data.m3 ?? 0;
+  document.getElementById('in-m3-txt').value = data.m3Txt || '';
+  document.getElementById('in-m4').value = data.m4 ?? 0;
+  document.getElementById('in-m4-txt').value = data.m4Txt || '';
+  document.getElementById('in-p').value = data.p ?? 0;
+  document.getElementById('in-c').value = data.c ?? 0;
+  document.getElementById('in-f').value = data.f ?? 0;
+  document.getElementById('in-note').value = data.note || '';
+}
+
+function readInputs() {
+  return {
+    date: document.getElementById('in-date').value || '2026-11-27',
+    name: document.getElementById('in-name').value || 'Chuan',
+    goal: document.getElementById('in-goal').value || '45',
+    limit: parseFloat(document.getElementById('in-target-kcal').value) || 1250,
+    targetP: document.getElementById('in-target-p').value || '90–105g',
+    m1: parseFloat(document.getElementById('in-m1').value) || 0,
+    m1Txt: document.getElementById('in-m1-txt').value || '',
+    m2: parseFloat(document.getElementById('in-m2').value) || 0,
+    m2Txt: document.getElementById('in-m2-txt').value || '',
+    m3: parseFloat(document.getElementById('in-m3').value) || 0,
+    m3Txt: document.getElementById('in-m3-txt').value || '',
+    m4: parseFloat(document.getElementById('in-m4').value) || 0,
+    m4Txt: document.getElementById('in-m4-txt').value || '',
+    p: parseFloat(document.getElementById('in-p').value) || 0,
+    c: parseFloat(document.getElementById('in-c').value) || 0,
+    f: parseFloat(document.getElementById('in-f').value) || 0,
+    note: document.getElementById('in-note').value || ''
+  };
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+function drawCharts(m1, m2, m3, m4, limit, p, c, f) {
+  const total = +(m1 + m2 + m3 + m4).toFixed(1);
+  const maxVal = Math.max(limit + 200, total + 150, 1450);
+  const svg = document.getElementById('bar-svg');
+  const labels = ['早餐', '午餐', '晚餐', '睡前收尾', '全日總計'];
+  const vals = [m1, m2, m3, m4, total];
+
+  let html = '';
+  const chartTop = 20, chartBottom = 175, chartHeight = chartBottom - chartTop;
+  const step = maxVal > 2000 ? 400 : 200;
+
+  for (let t = 0; t <= maxVal; t += step) {
+    const y = chartBottom - (t / maxVal) * chartHeight;
+    html += `<line x1="48" y1="${y}" x2="540" y2="${y}" stroke="#eeeeee" stroke-width="1"/>`;
+    html += `<text x="42" y="${y + 4}" text-anchor="end" font-size="10" fill="#888">${t}</text>`;
+  }
+
+  const limitY = chartBottom - (limit / maxVal) * chartHeight;
+  html += `<line x1="48" y1="${limitY}" x2="540" y2="${limitY}" stroke="#c86d44" stroke-width="2" stroke-dasharray="5,4"/>`;
+
+  const barWidth = 44;
+  const spacing = 94;
+  vals.forEach((v, i) => {
+    const x = 75 + i * spacing;
+    const h = (v / maxVal) * chartHeight;
+    const y = chartBottom - h;
+    const color = (i === 4 && v > limit) ? '#c86d44' : '#355e47';
+    html += `<rect x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="4" fill="${color}"/>`;
+    html += `<text x="${x + barWidth/2}" y="${y - 5}" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">${v}</text>`;
+    html += `<text x="${x + barWidth/2}" y="${chartBottom + 16}" text-anchor="middle" font-size="11" fill="#444">${labels[i]}</text>`;
+  });
+
+  svg.innerHTML = html;
+
+  const pKcal = +(p * 4).toFixed(1);
+  const cKcal = +(c * 4).toFixed(1);
+  const fKcal = +(f * 9).toFixed(1);
+  const macroSum = pKcal + cKcal + fKcal;
+
+  const pPct = macroSum ? +((pKcal / macroSum) * 100).toFixed(1) : 0;
+  const cPct = macroSum ? +((cKcal / macroSum) * 100).toFixed(1) : 0;
+  const fPct = macroSum ? +((fKcal / macroSum) * 100).toFixed(1) : 0;
+
+  document.getElementById('donut-sub').innerText = `蛋白 ${pPct}%・碳水 ${cPct}%・脂肪 ${fPct}%`;
+  document.getElementById('box-p').innerHTML = `<strong>蛋白質 ${pPct}%</strong>${pKcal} kcal<br>(${p}g)`;
+  document.getElementById('box-c').innerHTML = `<strong>碳水 ${cPct}%</strong>${cKcal} kcal<br>(${c}g)`;
+  document.getElementById('box-f').innerHTML = `<strong>脂肪 ${fPct}%</strong>${fKcal} kcal<br>(${f}g)`;
+
+  const r = 68, cx = 100, cy = 100;
+  const circ = 2 * Math.PI * r;
+  const pLen = (pPct / 100) * circ;
+  const cLen = (cPct / 100) * circ;
+  const fLen = (fPct / 100) * circ;
+
+  const donutSvg = document.getElementById('donut-svg');
+  if (macroSum === 0) {
+    donutSvg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="26"/>`;
+  } else {
+    donutSvg.innerHTML = `
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#355e47" stroke-width="26"
+        stroke-dasharray="${pLen} ${circ}" transform="rotate(-90 ${cx} ${cy})"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#324b5c" stroke-width="26"
+        stroke-dasharray="${cLen} ${circ}" stroke-dashoffset="${-pLen}" transform="rotate(-90 ${cx} ${cy})"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#c86d44" stroke-width="26"
+        stroke-dasharray="${fLen} ${circ}" stroke-dashoffset="${-(pLen + cLen)}" transform="rotate(-90 ${cx} ${cy})"/>
+    `;
+  }
+}
+
+function renderDashboard(data) {
+  const fmtDate = data.date.replace(/-/g, '/');
+  const total = +(data.m1 + data.m2 + data.m3 + data.m4).toFixed(1);
+  const diff = +(total - data.limit).toFixed(1);
+  const diffText = diff <= 0 ? `${diff}` : `+${diff}`;
+
+  document.getElementById('top-journal').innerText = `MY FAT-LOSS JOURNAL • ${fmtDate}`;
+  document.getElementById('top-title').innerText = `${data.name}減脂決策儀表板｜每日結算與自動配餐器`;
+  document.getElementById('pill-goal').innerText = `🎯 階段目標體重 ${data.goal} kg`;
+  document.getElementById('pill-range').innerText = `🔥 上限 ${data.limit.toLocaleString()} kcal｜蛋白 ${data.targetP}`;
+
+  document.getElementById('status-line').innerText = `✔ ${fmtDate} 正式開帳・自動決策系統就緒`;
+  document.getElementById('headline-text').innerText = `今日創造 ${diffText} kcal 熱量變化，蛋白質達到 ${data.p}g！`;
+  document.getElementById('summary-desc').innerText = data.note || `已根據目標體重 ${data.goal} kg 自動設定每日熱量上限 ${data.limit.toLocaleString()} kcal 與蛋白質目標 ${data.targetP}。`;
+  document.getElementById('deficit-top-label').innerText = `距離上限 ${data.limit.toLocaleString()}`;
+  document.getElementById('deficit-val').innerText = diffText;
+
+  document.getElementById('val-kcal').innerHTML = `${total.toLocaleString()} <span>kcal</span>`;
+  document.getElementById('note-kcal').innerText = diff <= 0 ? `低於上限 ${Math.abs(diff)} kcal` : `超出上限 ${diff} kcal`;
+  document.getElementById('badge-kcal').innerText = diff <= 0 ? '赤字達標' : '略超上限';
+  document.getElementById('badge-kcal').className = diff <= 0 ? 'badge badge-green' : 'badge badge-amber';
+
+  const targetPNum = parseFloat(data.targetP) || 90;
+  const pRate = Math.min(100, Math.round((data.p / targetPNum) * 100));
+  document.getElementById('val-p').innerHTML = `${data.p} <span>g</span>`;
+  document.getElementById('badge-p').innerText = `${pRate}% 達成`;
+  document.getElementById('note-p').innerText = `對標 ${data.targetP}｜高標守護瘦體重`;
+
+  document.getElementById('val-c').innerHTML = `${data.c} <span>g</span>`;
+  document.getElementById('val-f').innerHTML = `${data.f} <span>g</span>`;
+
+  const p1 = total ? ((data.m1/total)*100).toFixed(1) : 0;
+  const p2 = total ? ((data.m2/total)*100).toFixed(1) : 0;
+  const p3 = total ? ((data.m3/total)*100).toFixed(1) : 0;
+  const p4 = total ? ((data.m4/total)*100).toFixed(1) : 0;
+
+  document.getElementById('bar-title').innerText = `餐別熱量分布 vs ${data.limit.toLocaleString()} kcal 上限線`;
+  document.getElementById('bar-sub').innerText = `全日累積 ${total.toLocaleString()} kcal（早 ${p1}%・午 ${p2}%・晚 ${p3}%・睡前 ${p4}%）`;
+  document.getElementById('legend-limit').innerText = `每日熱量上限 (${data.limit.toLocaleString()} kcal)`;
+
+  document.getElementById('table-title').innerText = `${fmtDate} 四餐完整營養結算明細`;
+  document.getElementById('td-m1-txt').innerText = data.m1Txt || '-';
+  document.getElementById('td-m1-kcal').innerText = `${data.m1} kcal`;
+  document.getElementById('td-m2-txt').innerText = data.m2Txt || '-';
+  document.getElementById('td-m2-kcal').innerText = `${data.m2} kcal`;
+  document.getElementById('td-m3-txt').innerText = data.m3Txt || '-';
+  document.getElementById('td-m3-kcal').innerText = `${data.m3} kcal`;
+  document.getElementById('td-m4-txt').innerText = data.m4Txt || '-';
+  document.getElementById('td-m4-kcal').innerText = `${data.m4} kcal`;
+  document.getElementById('table-total').innerText = `全日總計：${total.toLocaleString()} kcal（創造 ${diffText} kcal 淨熱量赤字）`;
+
+  drawCharts(data.m1, data.m2, data.m3, data.m4, data.limit, data.p, data.c, data.f);
+}
+
+function renderHistory() {
+  const list = getHistory();
+  list.sort((a, b) => b.date.localeCompare(a.date));
+
+  const count = list.length;
+  let sumKcal = 0, sumDiff = 0, sumP = 0;
+  list.forEach(item => {
+    const t = item.m1 + item.m2 + item.m3 + item.m4;
+    sumKcal += t;
+    sumDiff += (t - item.limit);
+    sumP += item.p;
+  });
+
+  const avgKcal = count ? +(sumKcal / count).toFixed(1) : 0;
+  const avgP = count ? +(sumP / count).toFixed(1) : 0;
+  const totDiff = +sumDiff.toFixed(1);
+  const diffStr = totDiff <= 0 ? `${totDiff}` : `+${totDiff}`;
+
+  document.getElementById('hist-headline').innerText = `已累積 ${count} 天結算紀錄，持續追蹤波動平衡！`;
+  document.getElementById('hist-total-diff').innerText = `${diffStr} kcal`;
+  document.getElementById('hist-avg-note').innerText = `日均攝取 ${avgKcal.toLocaleString()} kcal｜日均蛋白 ${avgP}g`;
+  document.getElementById('hist-avg-kcal').innerHTML = `${avgKcal.toLocaleString()} <span>kcal</span>`;
+  document.getElementById('hist-avg-p').innerHTML = `${avgP} <span>g</span>`;
+
+  const container = document.getElementById('history-list');
+  if (list.length === 0) {
+    container.innerHTML = '<div style="font-size:13px; color:#6b7280;">尚無儲存紀錄，在上方輸入餐點並按「儲存並更新儀表板」後會自動出現在這裡。</div>';
+    return;
+  }
+
+  container.innerHTML = list.map((item) => {
+    const t = +(item.m1 + item.m2 + item.m3 + item.m4).toFixed(1);
+    const d = +(t - item.limit).toFixed(1);
+    const dStr = d <= 0 ? `${d}` : `+${d}`;
+    return `
+      <div class="history-card">
+        <div class="history-top">
+          <span class="history-date">📅 ${item.date}</span>
+          <div class="history-actions">
+            <button class="btn-mini" onclick="loadHistoryItem('${item.date}')">載入查看/編輯</button>
+            <button class="btn-mini del" onclick="deleteHistoryItem('${item.date}')">刪除</button>
+          </div>
+        </div>
+        <div class="history-stats">
+          總熱量：<strong>${t} kcal</strong>（vs 上限 ${item.limit}：<strong>${dStr} kcal</strong>）｜
+          P <strong>${item.p}g</strong>・C <strong>${item.c}g</strong>・F <strong>${item.f}g</strong>
+        </div>
+        <div class="history-meals">
+          早：${item.m1Txt || '-'} (${item.m1}) ／ 午：${item.m2Txt || '-'} (${item.m2}) ／ 晚：${item.m3Txt || '-'} (${item.m3}) ／ 睡前：${item.m4Txt || '-'} (${item.m4})
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function saveAndUpdate() {
+  const data = readInputs();
+  try {
+    localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(data));
+  } catch (e) {}
+
+  const history = getHistory();
+  const idx = history.findIndex(item => item.date === data.date);
+  if (idx >= 0) {
+    history[idx] = data;
+  } else {
+    history.push(data);
+  }
+  saveHistory(history);
+
+  renderDashboard(data);
+  renderHistory();
+
+  const toast = document.getElementById('save-toast');
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+function loadHistoryItem(dateStr) {
+  const history = getHistory();
+  const found = history.find(item => item.date === dateStr);
+  if (found) {
+    populateInputs(found);
+    renderDashboard(found);
+    try {
+      localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(found));
+    } catch (e) {}
+    const firstTabBtn = document.querySelectorAll('.tab-btn')[0];
+    switchTab('tab1', firstTabBtn);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function deleteHistoryItem(dateStr) {
+  let history = getHistory();
+  history = history.filter(item => item.date !== dateStr);
+  saveHistory(history);
+  renderHistory();
+}
+
+function clearTodayInputs() {
+  document.getElementById('in-m1-txt').value = '';
+  document.getElementById('in-m1').value = 0;
+  document.getElementById('in-m2-txt').value = '';
+  document.getElementById('in-m2').value = 0;
+  document.getElementById('in-m3-txt').value = '';
+  document.getElementById('in-m3').value = 0;
+  document.getElementById('in-m4-txt').value = '';
+  document.getElementById('in-m4').value = 0;
+  document.getElementById('in-p').value = 0;
+  document.getElementById('in-c').value = 0;
+  document.getElementById('in-f').value = 0;
+  document.getElementById('in-note').value = '';
+  [1,2,3,4].forEach(i => {
+    document.getElementById(`hint-m${i}`).innerText = '輸入食材後會自動估算熱量與三大營養素';
+  });
+}
+
+const initialData = loadSavedData();
+populateInputs(initialData);
+renderDashboard(initialData);
+renderHistory();
+</script>
+</body>
+</html>
